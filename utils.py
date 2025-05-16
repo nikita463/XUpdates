@@ -59,10 +59,10 @@ async def get_video_InputFile(session: aiohttp.ClientSession, videoUrl: str) -> 
     max_size = 50 * 1024 * 1024
     async with session.get(videoUrl, proxy=config.proxy_url) as response:
         content_length, video_data = await get_response_size(response, max_size)
-        if video_data is None:
-            logger.warning("get_video_InputFile: video_data is None")
-            return None
         if content_length > max_size:
+            return None
+        if video_data is None:
+            logger.warning(f"get_video_InputFile: video_data is None, url: {videoUrl}")
             return None
     inputFile = BufferedInputFile(file=video_data, filename="video.mp4")
     width, height = await get_video_size(videoUrl)
