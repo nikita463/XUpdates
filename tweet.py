@@ -15,8 +15,9 @@ seen_ids = deque(maxlen=1000)
 logger = logging.getLogger(__name__)
 
 class Tweet:
-    def __init__(self, id: int, text: str, media: List[MediaUnion] | None):
+    def __init__(self, id: int, username: str, text: str, media: List[MediaUnion] | None):
         self.id: int = id
+        self.username: str = username
         self.text: str = text
         self.media: List[MediaUnion] | None = media
 
@@ -52,9 +53,11 @@ class Tweet:
                 text += f"\n<a href='{video_url}'>Video</a>"
         media = media or None
 
-        return cls(id, text, media)
+        return cls(id, username, text, media)
 
     async def send(self, bot: Bot, chat_ids: Union[int, str, List[int], List[str]]):
+        if config.update is None:
+            return
         media = self.media
         if isinstance(chat_ids, int):
             chat_ids = [chat_ids]
@@ -65,12 +68,14 @@ class Tweet:
             media[0].parse_mode = 'HTML'
             tasks = []
             for chat_id in chat_ids:
-                tasks.append(bot.send_media_group(chat_id, media))
+                if config.update.chats_users is None or str(chat_id) not in config.update.chats_users or self.username in config.update.chats_users[str(chat_id)]:
+                    tasks.append(bot.send_media_group(chat_id, media))
             await asyncio.gather(*tasks)
         else:
             tasks = []
             for chat_id in chat_ids:
-                tasks.append(bot.send_message(chat_id, self.text, parse_mode='HTML', disable_web_page_preview=True))
+                if config.update.chats_users is None or str(chat_id) in config.update.chats_users and self.username in config.update.chats_users[str(chat_id)]:
+                    tasks.append(bot.send_message(chat_id, self.text, parse_mode='HTML', disable_web_page_preview=True))
             await asyncio.gather(*tasks)
 
 async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int) -> Tweet | None:

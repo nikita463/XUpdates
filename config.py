@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Dict, Union, Optional
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 import json
@@ -11,6 +11,7 @@ class BotSettings(BaseModel):
 class UpdateSettings(BaseModel):
     update_cd: int
     update_users: List[str]
+    chats_users: Optional[Dict[str, List[str]]] = None
     chat_ids: Optional[List[int]] = None
     channel_tags: Optional[List[str]] = None
 
