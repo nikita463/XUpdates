@@ -26,41 +26,34 @@ Telegram-бот, который автоматически репостит тв
 
 ## Описание параметров
 
-#### `nitter_url` (string)
-URL на Nitter instance
+`nitter_url` *(string)* - URL на Nitter instance
 
-#### `proxy_url` (string, optional)
-URL прокси, через который будут проходить запросы к nitter
+`proxy_url` *(string, optional)* - URL прокси, через который будут проходить запросы к nitter
 
 ---
 
-### `bot` Раздел с настройками бота
+<span style="font-size: 1.25em; display: inline;"><code>bot</code><span style="font-weight: 600;"> - Раздел с настройками бота</span></span>
 
-#### `token` (string)
-API Token telegram бота, получается через [@BotFather](https://t.me/BotFather)
+`token` *(string)* - API Token telegram бота, получается через [@BotFather](https://t.me/BotFather)
 
-#### `admin_ids` (array of integers, optional)
-ID telegram аккаунтов, которые могут использовать /get (если не указать, команда будет отключена)
+`admin_ids` *(array of integers, optional)* - ID telegram аккаунтов, которые могут использовать /get (если не указать, команда будет отключена)
 
 ---
 
-### `update` Раздел с настройками отслеживания постов в twitter аккаунтах (если не указать, ослеживания twitter не будет)
+<span style="font-size: 1.25em; display: inline;"><code>update</code><span style="font-weight: 600;"> - Раздел с настройками отслеживания постов в twitter аккаунтах (если не указать, ослеживания twitter не будет)</span></span>
 
-#### `update_cd` (integer)
-Интервал между обновлениями в секундах
+`update_cd` *(integer)* - Интервал между обновлениями в секундах
 
-#### `update_users` (array of strings)
-Теги аккаунтов в Twitter, которые нужно отслеживать
+`update_users` *(array of strings)* - Теги аккаунтов в Twitter, которые нужно отслеживать
 
-#### `chat_ids` (array of integers, optional)
-ID telegram чатов, в которые будут публиковаться обновления
+`chat_ids` *(array of integers, optional)* - ID telegram чатов, в которые будут публиковаться обновления
 
-#### `channel_tags` (array of strings, optional)
-Теги telegram каналов, в которые будут публиковаться обновления
+`channel_tags` *(array of strings, optional)* - Теги telegram каналов, в которые будут публиковаться обновления
 
----
 
 ## Docker
+
+#### Запуск
 
 ```bash
 docker build -t xupdates .
