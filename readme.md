@@ -32,7 +32,7 @@ Telegram-бот, который автоматически репостит тв
 
 ---
 
-<span style="font-size: 1.25em; display: inline;"><code>bot</code><span style="font-weight: 600;"> - Раздел с настройками бота</span></span>
+### `bot` Раздел с настройками бота
 
 `token` *(string)* - API Token telegram бота, получается через [@BotFather](https://t.me/BotFather)
 
@@ -40,7 +40,7 @@ Telegram-бот, который автоматически репостит тв
 
 ---
 
-<span style="font-size: 1.25em; display: inline;"><code>update</code><span style="font-weight: 600;"> - Раздел с настройками отслеживания постов в twitter аккаунтах (если не указать, ослеживания twitter не будет)</span></span>
+### `update` - Раздел с настройками отслеживания постов в twitter аккаунтах (если не указать, ослеживания twitter не будет)
 
 `update_cd` *(integer)* - Интервал между обновлениями в секундах
 
