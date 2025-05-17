@@ -1,0 +1,16 @@
+[Unit]
+Description=XUpdates Telegram Bot
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+ExecStart=/usr/bin/docker run --rm --name xupdates xupdates
+ExecStop=/usr/bin/docker stop xupdates
+TimeoutStartSec=30
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
