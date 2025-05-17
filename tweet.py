@@ -54,9 +54,11 @@ class Tweet:
 
         return cls(id, text, media)
 
-    async def send(self, bot: Bot, chat_ids: List[int] | int):
+    async def send(self, bot: Bot, chat_ids: Union[int, str, List[int], List[str]]):
         media = self.media
         if isinstance(chat_ids, int):
+            chat_ids = [chat_ids]
+        elif isinstance(chat_ids, str):
             chat_ids = [chat_ids]
         if media:
             media[0].caption = self.text
@@ -179,11 +181,16 @@ async def track_tweets(session: aiohttp.ClientSession, username: str, is_start: 
             seen_ids.append(id)
     return new_tweets
 async def track_inf(session: aiohttp.ClientSession, username: str, bot: Bot):
+    if config.update is None:
+        return
     is_start = True
     while True:
         new_tweets = await track_tweets(session, username, is_start)
         is_start = False
-        if new_tweets and config.tg_bot.chat_ids:
-            tasks = [tweet.send(bot, config.tg_bot.chat_ids) for tweet in new_tweets]
-            await asyncio.gather(*tasks)
-        await asyncio.sleep(config.update_cd)
+        tasks = []
+        if new_tweets and config.update.chat_ids:
+            tasks += [tweet.send(bot, config.update.chat_ids) for tweet in new_tweets]
+        if new_tweets and config.update.channel_tags:
+            tasks += [tweet.send(bot, config.update.channel_tags) for tweet in new_tweets]
+        await asyncio.gather(*tasks)
+        await asyncio.sleep(config.update.update_cd)

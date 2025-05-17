@@ -1,49 +1,42 @@
-from dataclasses import dataclass
-from environs import Env
 from typing import List, Optional
-import time
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings
+import json
 
 
-@dataclass
-class TgBot:
+class BotSettings(BaseModel):
     token: str
     admin_ids: Optional[List[int]] = None
+
+class UpdateSettings(BaseModel):
+    update_cd: int
+    update_users: List[str]
     chat_ids: Optional[List[int]] = None
     channel_tags: Optional[List[str]] = None
 
 
-@dataclass
-class Config:
-    tg_bot: TgBot
+class Settings(BaseSettings):
+    bot: BotSettings
+    update: Optional[UpdateSettings] = None
     nitter_url: str
-    proxy_url: Optional[str]
-    update_cd: int
-    update_users: Optional[List[str]]
+    proxy_url: Optional[str] = None
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
-def load_config(path: str | None = None) -> Config:
-    env: Env = Env()
-    env.read_env(path)
-    return Config(
-        tg_bot=TgBot(
-            token=env.str("BOT_TOKEN"),
-            admin_ids=env.list("ADMIN_IDS", subcast=int, default=None),
-            chat_ids=env.list("CHAT_IDS", subcast=int, default=None),
-            channel_tags=env.list("CHANNEL_TAGS", subcast=str, default=None)
-        ),
-        nitter_url=env.str("NITTER_URL"),
-        proxy_url=env.str("PROXY_URL", default=None),
-        update_cd=env.int("UPDATE_CD"),
-        update_users=env.list("UPDATE_USERS", subcast=str, default=None)
-    )
+def load_config(json_path: str) -> Settings:
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return Settings(**data)
 
 
-config = load_config('./.env')
+config = load_config('config.json')
 #print(config.nitter_url)
 #print(config.proxy_url)
-#print(config.tg_bot.token)
-#print(config.tg_bot.admin_ids)
-#print(config.tg_bot.chat_ids)
-#print(config.tg_bot.channel_tags)
-#print(config.update_users)
-#print(config.update_cd)
+#print(config.bot.token)
+#print(config.bot.admin_ids)
+#print(config.update.update_cd)
+#print(config.update.update_users)
+#print(config.update.chat_ids)
+#print(config.update.channel_tags)

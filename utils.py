@@ -18,6 +18,7 @@ async def format_html_element(Node: Node, url: str) -> str:
         current = current.next
     inner_html = inner_html.replace('href="/', f'href="{url}/')
     return inner_html
+
 async def get_response_size(response: aiohttp.ClientResponse, max_size: int | None) -> Tuple[int, bytes | None]:
     size_bytes = 0
     buffer = BytesIO()
@@ -27,12 +28,14 @@ async def get_response_size(response: aiohttp.ClientResponse, max_size: int | No
         if max_size and size_bytes > max_size:
             return size_bytes, None
     return size_bytes, buffer.getvalue()
+
 async def get_video_size(videoUrl: str) -> Tuple[int, int]:
     size = videoUrl.split('/')[-2]
     size = size.split('x')
     if len(size) != 2:
         logger.warning("get_video_size: len(size) != 2")
     return int(size[0]), int(size[1])
+
 async def get_tweet_id(tweet_url: str) -> int | None:
     tweet_id = tweet_url.split('/')[-1]
     if tweet_id[tweet_id.find('#')] == '#':
@@ -44,31 +47,34 @@ async def get_tweet_id(tweet_url: str) -> int | None:
         return None
     return int(tweet_id)
 
-async def get_image_InputFile(session: aiohttp.ClientSession, imageUrl: str) -> InputMediaPhoto | None:
+
+async def get_image_InputFile(session: aiohttp.ClientSession, image_url: str) -> InputMediaPhoto | None:
     max_size = 50 * 1024 * 1024
-    async with session.get(imageUrl, proxy=config.proxy_url) as response:
+    async with session.get(image_url, proxy=config.proxy_url) as response:
         content_length, image_data = await get_response_size(response, max_size)
-        if image_data is None:
-            logger.warning("get_image_InputFile: image_data is None")
-            return None
         if content_length > max_size:
+            return None
+        if image_data is None:
+            logger.warning(f"get_image_InputFile: image_data is None, url: {image_url}")
             return None
     inputFile = BufferedInputFile(file=image_data, filename="image.jpg")
     return InputMediaPhoto(media=inputFile)
-async def get_video_InputFile(session: aiohttp.ClientSession, videoUrl: str) -> InputMediaVideo | None:
+
+async def get_video_InputFile(session: aiohttp.ClientSession, video_url: str) -> InputMediaVideo | None:
     max_size = 50 * 1024 * 1024
-    async with session.get(videoUrl, proxy=config.proxy_url) as response:
+    async with session.get(video_url, proxy=config.proxy_url) as response:
         content_length, video_data = await get_response_size(response, max_size)
         if content_length > max_size:
             return None
         if video_data is None:
-            logger.warning(f"get_video_InputFile: video_data is None, url: {videoUrl}")
+            logger.warning(f"get_video_InputFile: video_data is None, url: {video_url}")
             return None
     inputFile = BufferedInputFile(file=video_data, filename="video.mp4")
-    width, height = await get_video_size(videoUrl)
+    width, height = await get_video_size(video_url)
     return InputMediaVideo(media=inputFile, width=width, height=height, supports_streaming=True)
 
+
 async def is_admin(user_id) -> bool:
-    if config.tg_bot.admin_ids:
-        return user_id in config.tg_bot.admin_ids
+    if config.bot.admin_ids:
+        return user_id in config.bot.admin_ids
     return True

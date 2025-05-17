@@ -8,7 +8,7 @@ from tweet import track_inf, fetch_tweet
 from utils import is_admin, get_tweet_id
 from config import config
 
-bot = Bot(token=config.tg_bot.token)
+bot = Bot(token=config.bot.token)
 dp = Dispatcher()
 session: ClientSession | None = None
 
@@ -32,7 +32,7 @@ async def process_get(message: Message):
         return
 
     if session is None:
-        message.answer("ClientSession не запущен")
+        await message.answer("ClientSession не запущен")
         return
     tweet = await fetch_tweet(session, f"https://x.com/i/status/{tweet_id}")
     if tweet is None:
@@ -50,8 +50,8 @@ async def main():
     global session
     session = ClientSession()
 
-    if config.update_users:
-        for username in config.update_users:
+    if config.update:
+        for username in config.update.update_users:
             asyncio.create_task(track_inf(session, username, bot))
     await dp.start_polling(bot)
 
