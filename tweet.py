@@ -31,7 +31,7 @@ class Tweet:
                      quote_username: Optional[str],
                      quote_id: Optional[int],
                      retweet_username: Optional[str]):
-        text = text.replace('@', '')
+        text = text.replace(' @', ' ')
         text += "\n<i>Source: "
         if retweet_username:
             text += f"<a href='{twitter_url}/{retweet_username}'>RT</a> "
@@ -87,7 +87,8 @@ async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int
     if username is None:
         logger.warning("parse_tweet: tweet-avatar href is None")
         return None
-    username = username[1:]
+    if username[0] == '/':
+        username = username[1:]
 
     text = tweet.css_first('div.tweet-content.media-body')
     if text is None:
@@ -117,9 +118,9 @@ async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int
         if quote_link is None:
             logger.warning("parse_tweet: quote_link href is None")
         else:
-            quote_link = quote_link.split('/')
-            quote_username = quote_link[1]
-            quote_id = int(quote_link[-1][:-2])
+            # quote_link = quote_link.split('/')
+            quote_username = quote_link.split('/')[1]
+            quote_id = await get_tweet_id(quote_link)
 
     retweet_link = tweet.css_first('a.retweet-link')
     retweet_username = None
@@ -127,8 +128,10 @@ async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int
         retweet_link = retweet_link.attributes.get('href')
         if retweet_link is None:
             logger.warning("parse_tweet: retweet_link href is None")
-        else:
+        elif retweet_link[0] == '/':
             retweet_username = retweet_link[1:]
+        else:
+            retweet_username = retweet_link
 
     return await Tweet.create(session, username, tweet_id, text, images_urls, videos_urls, quote_username, quote_id, retweet_username)
 
