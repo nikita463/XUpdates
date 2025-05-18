@@ -1,8 +1,7 @@
-import asyncio
 import aiohttp
 from io import BytesIO
 from aiogram.types import BufferedInputFile, InputMediaPhoto, InputMediaVideo
-from selectolax.parser import HTMLParser, Node
+from selectolax.parser import Node
 from typing import Tuple
 import logging
 

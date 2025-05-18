@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
 from aiogram import Bot
-from aiogram.types import InputMediaPhoto, InputMediaVideo, MediaUnion
+from aiogram.types import MediaUnion
 from selectolax.parser import HTMLParser, Node
 from typing import List, Optional, Union
 from collections import deque
