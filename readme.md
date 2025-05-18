@@ -15,9 +15,12 @@ Telegram-бот, который автоматически репостит тв
   },
   "update": {
     "update_cd": 30,
-    "update_users": ["SpaceX"],
+    "update_users": ["SpaceX", "elonmusk"],
     "chat_ids": [1234567890, -1234567890123],
-    "channel_tags": ["@spacenewslive"]
+    "channel_tags": ["@spacenewslive"],
+    "chats_users": {
+      "1234567890": ["SpaceX"]
+    }
   },
   "nitter_url": "http://127.0.0.1:8080",
   "proxy_url": "http://127.0.0.1:10808"
@@ -49,6 +52,8 @@ Telegram-бот, который автоматически репостит тв
 `chat_ids` *(array of integers, optional)* - ID telegram чатов, в которые будут публиковаться обновления
 
 `channel_tags` *(array of strings, optional)* - Теги telegram каналов, в которые будут публиковаться обновления
+
+`chats_users` *(dict of int,str and str, optional)* - Особые правила для публикования обновлений в разные чаты или каналы, если не указать, все обновления будут поститься во все чаты и каналы
 
 
 ## Docker
