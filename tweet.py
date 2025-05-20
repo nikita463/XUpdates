@@ -6,6 +6,7 @@ from selectolax.parser import HTMLParser, Node
 from typing import List, Optional, Union
 from collections import deque
 import logging
+import time
 
 from utils import *
 from config import config
@@ -55,7 +56,7 @@ class Tweet:
 
         return cls(id, username, text, media)
 
-    async def send(self, bot: Bot, chat_ids: Union[int, str, List[int], List[str]]):
+    async def send(self, bot: Bot, chat_ids: Union[int, str, List[int], List[str]], isget: bool):
         if config.update is None:
             return
         media = self.media
@@ -68,13 +69,13 @@ class Tweet:
             media[0].parse_mode = 'HTML'
             tasks = []
             for chat_id in chat_ids:
-                if config.update.chats_users is None or str(chat_id) not in config.update.chats_users or self.username in config.update.chats_users[str(chat_id)]:
+                if isget or config.update.chats_users is None or str(chat_id) not in config.update.chats_users or self.username in config.update.chats_users[str(chat_id)]:
                     tasks.append(bot.send_media_group(chat_id, media))
             await asyncio.gather(*tasks)
         else:
             tasks = []
             for chat_id in chat_ids:
-                if config.update.chats_users is None or str(chat_id) in config.update.chats_users and self.username in config.update.chats_users[str(chat_id)]:
+                if isget or config.update.chats_users is None or str(chat_id) not in config.update.chats_users or self.username in config.update.chats_users[str(chat_id)]:
                     tasks.append(bot.send_message(chat_id, self.text, parse_mode='HTML', disable_web_page_preview=True))
             await asyncio.gather(*tasks)
 
@@ -135,23 +136,53 @@ async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int
 
     return await Tweet.create(session, username, tweet_id, text, images_urls, videos_urls, quote_username, quote_id, retweet_username)
 
+
 async def fetch_tweet(session: aiohttp.ClientSession, tweet_url: str) -> Tweet | None:
     tweet_id = await get_tweet_id(tweet_url)
     if tweet_id is None:
         return None
 
     async with session.get(f"{config.nitter_url}/i/status/{tweet_id}", proxy=config.proxy_url) as response:
+        try:
+            response.raise_for_status()
+        except aiohttp.ClientConnectorError:
+            logger.error(f"{time.time}: fetch_tweet: ClientConnectorError")
+            return None
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"{time.time}: fetch_tweet: ClientResponse: {e.status}")
+            return None
+        except asyncio.TimeoutError:
+            logger.error(f"{time.time}: fetch_tweet: TimeoutError")
+            return None
+        except aiohttp.ClientError as e:
+            logger.error(f"{time.time}: fetch_tweet: ClientError: {e}")
+            return None
         tweet = HTMLParser(await response.text())
     tweet = tweet.css_first('div.main-tweet')
     if tweet is None:
-        logger.warning("fetch_tweet: main-tweet is None")
+        logger.warning(f"{time.time}: fetch_tweet: main-tweet is None")
         return None
 
     tweet = await parse_tweet(session, tweet, tweet_id)
     return tweet
+
 async def fetch_tweets(session: aiohttp.ClientSession, username: str, count: int) -> List[Tweet]:
     user_url = f"{config.nitter_url}/{username}"
     async with session.get(user_url, proxy=config.proxy_url) as response:
+        try:
+            response.raise_for_status()
+        except aiohttp.ClientConnectorError:
+            logger.error(f"{time.time}: fetch_tweets: ClientConnectorError")
+            return []
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"{time.time}: fetch_tweets: ClientResponse: {e.status}")
+            return []
+        except asyncio.TimeoutError:
+            logger.error(f"{time.time}: fetch_tweets: TimeoutError")
+            return []
+        except aiohttp.ClientError as e:
+            logger.error(f"{time.time}: fetch_tweets: ClientError: {e}")
+            return []
         html_code = await response.text()
     tweets = []
     tweets_line = HTMLParser(html_code).css('div.timeline-item')
@@ -159,12 +190,12 @@ async def fetch_tweets(session: aiohttp.ClientSession, username: str, count: int
     for tweet in tweets_line[:count]:
         tweet_link = tweet.css_first('a.tweet-link')
         if tweet_link is None:
-            logger.warning("fetch_tweets: tweet link is None")
+            logger.warning(f"{time.time}: fetch_tweets: tweet link is None")
             continue
 
         tweet_link_href = tweet_link.attributes.get('href')
         if tweet_link_href is None:
-            logger.warning("fetch_tweets: tweet link href is None")
+            logger.warning(f"{time.time}: fetch_tweets: tweet link href is None")
             continue
 
         tweet_id = await get_tweet_id(tweet_link_href)
@@ -172,6 +203,7 @@ async def fetch_tweets(session: aiohttp.ClientSession, username: str, count: int
             continue
         tweets.append(await parse_tweet(session, tweet, tweet_id))
     return tweets
+
 
 async def track_tweets(session: aiohttp.ClientSession, username: str, is_start: bool) -> List[Tweet]:
     if is_start:
@@ -188,6 +220,7 @@ async def track_tweets(session: aiohttp.ClientSession, username: str, is_start: 
             new_tweets.append(tweet)
             seen_ids.append(id)
     return new_tweets
+
 async def track_inf(session: aiohttp.ClientSession, username: str, bot: Bot):
     if config.update is None:
         return
@@ -197,8 +230,8 @@ async def track_inf(session: aiohttp.ClientSession, username: str, bot: Bot):
         is_start = False
         tasks = []
         if new_tweets and config.update.chat_ids:
-            tasks += [tweet.send(bot, config.update.chat_ids) for tweet in new_tweets]
+            tasks += [tweet.send(bot, config.update.chat_ids, False) for tweet in new_tweets]
         if new_tweets and config.update.channel_tags:
-            tasks += [tweet.send(bot, config.update.channel_tags) for tweet in new_tweets]
+            tasks += [tweet.send(bot, config.update.channel_tags, False) for tweet in new_tweets]
         await asyncio.gather(*tasks)
         await asyncio.sleep(config.update.update_cd)

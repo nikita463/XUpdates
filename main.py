@@ -39,7 +39,7 @@ async def process_get(message: Message):
         await message.answer("Твит не найден")
         return
 
-    await tweet.send(bot, message.chat.id)
+    await tweet.send(bot, message.chat.id, True)
     try:
         await message.delete()
     except:
