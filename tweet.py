@@ -234,7 +234,7 @@ async def track_inf(session: aiohttp.ClientSession, username: str, bot: Bot):
     is_start = True
     while True:
         new_tweets = await track_tweets(session, username, is_start)
-        if new_tweets:
+        if not new_tweets is None:
             is_start = False
         tasks = []
         if new_tweets and config.update.chat_ids:
