@@ -6,7 +6,7 @@ from aiogram.filters import Command
 
 from tweet import track_inf, fetch_tweet
 from utils import is_admin, get_tweet_id
-from config import config
+from config import config, load_config
 
 bot = Bot(token=config.bot.token)
 dp = Dispatcher()
@@ -17,6 +17,15 @@ async def process_id(message: Message):
     if message.from_user is None:
         return
     await message.answer(f"Chat id: `{message.chat.id}`\nUser id: `{message.from_user.id}`", parse_mode='Markdown')
+
+@dp.message(Command(commands=['update_cfg']))
+async def process_update_cfg(message: Message):
+    if message.from_user is None or not await is_admin(message.from_user.id):
+        return
+    global config
+    config = load_config('config.json')
+    response = f"```\n{str(config)}```"
+    await message.answer(response, parse_mode='Markdown')
 
 @dp.message(Command(commands=['get']))
 async def process_get(message: Message):
