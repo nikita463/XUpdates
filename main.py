@@ -5,7 +5,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 
 from tweet import track_inf, fetch_tweet
-from utils import is_admin, get_tweet_id
+from utils import is_admin, get_tweet_id, get_sessions_health
 from config import config
 
 bot = Bot(token=config.bot.token)
@@ -17,6 +17,13 @@ async def process_id(message: Message):
     if message.from_user is None:
         return
     await message.answer(f"Chat id: `{message.chat.id}`\nUser id: `{message.from_user.id}`", parse_mode='Markdown')
+
+@dp.message(Command(commands=['health']))
+async def process_health(message: Message):
+    if session is None:
+        await message.answer("ClientSession не запущен")
+        return
+    await message.answer(await get_sessions_health(session), parse_mode='Markdown')
 
 @dp.message(Command(commands=['get']))
 async def process_get(message: Message):

@@ -5,6 +5,7 @@ from selectolax.parser import Node
 from typing import Tuple
 import logging
 import time
+import json
 
 from config import config
 
@@ -78,3 +79,14 @@ async def is_admin(user_id) -> bool:
     if config.bot.admin_ids:
         return user_id in config.bot.admin_ids
     return True
+
+async def get_sessions_health(session: aiohttp.ClientSession):
+    async with session.get("http://77.239.112.57:8080/.health") as response:
+        health = json.loads(await response.text())
+    msg = '```\n'
+    msg += f"Total sessions: {health['sessions']['total']}\nLimited sessions: {health['sessions']['limited']}\n"
+    msg += f"Total requests: {health['requests']['total']}\n"
+    for key in health['requests']['apis']:
+        msg += f"{key}: {health['requests']['apis'][key]}\n"
+    msg += '```'
+    return msg
