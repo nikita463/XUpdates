@@ -33,7 +33,7 @@ async def get_video_size(videoUrl: str) -> Tuple[int, int]:
     size = videoUrl.split('/')[-2]
     size = size.split('x')
     if len(size) != 2:
-        logger.warning(f"{time.time}: get_video_size: len(size) != 2")
+        logger.warning(f"{time.time()}: get_video_size: len(size) != 2")
     return int(size[0]), int(size[1])
 
 async def get_tweet_id(tweet_url: str) -> int | None:
@@ -43,7 +43,7 @@ async def get_tweet_id(tweet_url: str) -> int | None:
     if tweet_id[tweet_id.find('?')] == '?':
         tweet_id = tweet_id[:tweet_id.find('?')]
     if not tweet_id.isdigit():
-        logger.warning(f"{time.time}: get_tweet_id: tweet_id not digit")
+        logger.warning(f"{time.time()}: get_tweet_id: tweet_id not digit")
         return None
     return int(tweet_id)
 
@@ -55,7 +55,7 @@ async def get_image_InputFile(session: aiohttp.ClientSession, image_url: str) ->
         if content_length > max_size:
             return None
         if image_data is None:
-            logger.warning(f"{time.time}: get_image_InputFile: image_data is None, url: {image_url}")
+            logger.warning(f"{time.time()}: get_image_InputFile: image_data is None, url: {image_url}")
             return None
     inputFile = BufferedInputFile(file=image_data, filename="image.jpg")
     return InputMediaPhoto(media=inputFile)
@@ -67,7 +67,7 @@ async def get_video_InputFile(session: aiohttp.ClientSession, video_url: str) ->
         if content_length > max_size:
             return None
         if video_data is None:
-            logger.warning(f"{time.time}: get_video_InputFile: video_data is None, url: {video_url}")
+            logger.warning(f"{time.time()}: get_video_InputFile: video_data is None, url: {video_url}")
             return None
     inputFile = BufferedInputFile(file=video_data, filename="video.mp4")
     width, height = await get_video_size(video_url)

@@ -82,18 +82,18 @@ class Tweet:
 async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int) -> Tweet | None:
     username = tweet.css_first('a.tweet-avatar')
     if username is None:
-        logger.warning("parse_tweet: tweet-avatar is None")
+        logger.warning(f"{time.time()}: parse_tweet: tweet-avatar is None")
         return None
     username = username.attributes.get('href')
     if username is None:
-        logger.warning("parse_tweet: tweet-avatar href is None")
+        logger.warning(f"{time.time()}: parse_tweet: tweet-avatar href is None")
         return None
     if username[0] == '/':
         username = username[1:]
 
     text = tweet.css_first('div.tweet-content.media-body')
     if text is None:
-        logger.warning("parse_tweet: tweet-content is None")
+        logger.warning(f"{time.time()}: parse_tweet: tweet-content is None")
         return None
     text = await format_html_element(text, twitter_url)
 
@@ -102,13 +102,13 @@ async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int
     for image in tweet.css('a.still-image'):
         image_href = image.attributes.get('href')
         if image_href is None:
-            logger.warning("parse_tweet: image href is None")
+            logger.warning(f"{time.time()}: parse_tweet: image href is None")
         else:
             images_urls.append(config.nitter_url + image_href)
     for video in tweet.css('source'):
         video_url = video.attributes.get('src')
         if video_url is None:
-            logger.warning("parse_tweet: video source href is None")
+            logger.warning(f"{time.time()}: parse_tweet: video source href is None")
         else:
             videos_urls.append(video_url)
 
@@ -117,7 +117,7 @@ async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int
     if quote_link:
         quote_link = quote_link.attributes.get('href')
         if quote_link is None:
-            logger.warning("parse_tweet: quote_link href is None")
+            logger.warning(f"{time.time()}: parse_tweet: quote_link href is None")
         else:
             # quote_link = quote_link.split('/')
             quote_username = quote_link.split('/')[1]
@@ -128,7 +128,7 @@ async def parse_tweet(session: aiohttp.ClientSession, tweet: Node, tweet_id: int
     if retweet_link:
         retweet_link = retweet_link.attributes.get('href')
         if retweet_link is None:
-            logger.warning("parse_tweet: retweet_link href is None")
+            logger.warning(f"{time.time()}: parse_tweet: retweet_link href is None")
         elif retweet_link[0] == '/':
             retweet_username = retweet_link[1:]
         else:
@@ -146,21 +146,21 @@ async def fetch_tweet(session: aiohttp.ClientSession, tweet_url: str) -> Tweet |
         try:
             response.raise_for_status()
         except aiohttp.ClientConnectorError:
-            logger.error(f"{time.time}: fetch_tweet: ClientConnectorError")
+            logger.error(f"{time.time()}: fetch_tweet: ClientConnectorError")
             return None
         except aiohttp.ClientResponseError as e:
-            logger.error(f"{time.time}: fetch_tweet: ClientResponse: {e.status}")
+            logger.error(f"{time.time()}: fetch_tweet: ClientResponse: {e.status}")
             return None
         except asyncio.TimeoutError:
-            logger.error(f"{time.time}: fetch_tweet: TimeoutError")
+            logger.error(f"{time.time()}: fetch_tweet: TimeoutError")
             return None
         except aiohttp.ClientError as e:
-            logger.error(f"{time.time}: fetch_tweet: ClientError: {e}")
+            logger.error(f"{time.time()}: fetch_tweet: ClientError: {e}")
             return None
         tweet = HTMLParser(await response.text())
     tweet = tweet.css_first('div.main-tweet')
     if tweet is None:
-        logger.warning(f"{time.time}: fetch_tweet: main-tweet is None")
+        logger.warning(f"{time.time()}: fetch_tweet: main-tweet is None")
         return None
 
     tweet = await parse_tweet(session, tweet, tweet_id)
@@ -172,16 +172,16 @@ async def fetch_tweets(session: aiohttp.ClientSession, username: str, count: int
         try:
             response.raise_for_status()
         except aiohttp.ClientConnectorError:
-            logger.error(f"{time.time}: fetch_tweets: ClientConnectorError")
+            logger.error(f"{time.time()}: fetch_tweet: ClientConnectorError")
             return []
         except aiohttp.ClientResponseError as e:
-            logger.error(f"{time.time}: fetch_tweets: ClientResponse: {e.status}")
+            logger.error(f"{time.time()}: fetch_tweet: ClientResponse: {e.status}")
             return []
         except asyncio.TimeoutError:
-            logger.error(f"{time.time}: fetch_tweets: TimeoutError")
+            logger.error(f"{time.time()}: fetch_tweet: TimeoutError")
             return []
         except aiohttp.ClientError as e:
-            logger.error(f"{time.time}: fetch_tweets: ClientError: {e}")
+            logger.error(f"{time.time()}: fetch_tweet: ClientError: {e}")
             return []
         html_code = await response.text()
     tweets = []
@@ -190,12 +190,12 @@ async def fetch_tweets(session: aiohttp.ClientSession, username: str, count: int
     for tweet in tweets_line[:count]:
         tweet_link = tweet.css_first('a.tweet-link')
         if tweet_link is None:
-            logger.warning(f"{time.time}: fetch_tweets: tweet link is None")
+            logger.warning(f"{time.time()}: fetch_tweets: tweet link is None")
             continue
 
         tweet_link_href = tweet_link.attributes.get('href')
         if tweet_link_href is None:
-            logger.warning(f"{time.time}: fetch_tweets: tweet link href is None")
+            logger.warning(f"{time.time()}: fetch_tweets: tweet link href is None")
             continue
 
         tweet_id = await get_tweet_id(tweet_link_href)
