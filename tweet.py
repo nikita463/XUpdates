@@ -7,12 +7,15 @@ from typing import List, Optional, Union
 from collections import deque
 import logging
 import time
+import pickle
 
 from utils import *
 from config import config
 
 twitter_url = 'https://x.com'
-seen_ids = deque(maxlen=1000)
+seen_ids: deque = deque(maxlen=1000)
+with open("seen_ids.pkl", "rb") as f:
+    seen_ids = pickle.load(f)
 logger = logging.getLogger(__name__)
 
 class Tweet:
@@ -166,23 +169,23 @@ async def fetch_tweet(session: aiohttp.ClientSession, tweet_url: str) -> Tweet |
     tweet = await parse_tweet(session, tweet, tweet_id)
     return tweet
 
-async def fetch_tweets(session: aiohttp.ClientSession, username: str, count: int) -> List[Tweet]:
+async def fetch_tweets(session: aiohttp.ClientSession, username: str, count: int) -> List[Tweet] | None:
     user_url = f"{config.nitter_url}/{username}"
     async with session.get(user_url, proxy=config.proxy_url) as response:
         try:
             response.raise_for_status()
         except aiohttp.ClientConnectorError:
             logger.error(f"{time.time()}: fetch_tweet: ClientConnectorError")
-            return []
+            return None
         except aiohttp.ClientResponseError as e:
             logger.error(f"{time.time()}: fetch_tweet: ClientResponse: {e.status}")
-            return []
+            return None
         except asyncio.TimeoutError:
             logger.error(f"{time.time()}: fetch_tweet: TimeoutError")
-            return []
+            return None
         except aiohttp.ClientError as e:
             logger.error(f"{time.time()}: fetch_tweet: ClientError: {e}")
-            return []
+            return None
         html_code = await response.text()
     tweets = []
     tweets_line = HTMLParser(html_code).css('div.timeline-item')
@@ -205,12 +208,14 @@ async def fetch_tweets(session: aiohttp.ClientSession, username: str, count: int
     return tweets
 
 
-async def track_tweets(session: aiohttp.ClientSession, username: str, is_start: bool) -> List[Tweet]:
+async def track_tweets(session: aiohttp.ClientSession, username: str, is_start: bool) -> List[Tweet] | None:
     if is_start:
         count = 7
     else:
         count = 5
     tweets = await fetch_tweets(session, username, count)
+    if tweets is None:
+        return None
     new_tweets = []
     for tweet in tweets:
         id = tweet.id
@@ -219,6 +224,8 @@ async def track_tweets(session: aiohttp.ClientSession, username: str, is_start: 
         if id not in seen_ids:
             new_tweets.append(tweet)
             seen_ids.append(id)
+    with open("seen_ids.pkl", "wb") as f:
+        pickle.dump(seen_ids, f)
     return new_tweets
 
 async def track_inf(session: aiohttp.ClientSession, username: str, bot: Bot):
@@ -227,7 +234,8 @@ async def track_inf(session: aiohttp.ClientSession, username: str, bot: Bot):
     is_start = True
     while True:
         new_tweets = await track_tweets(session, username, is_start)
-        is_start = False
+        if new_tweets:
+            is_start = False
         tasks = []
         if new_tweets and config.update.chat_ids:
             tasks += [tweet.send(bot, config.update.chat_ids, False) for tweet in new_tweets]
