@@ -20,6 +20,8 @@ async def process_id(message: Message):
 
 @dp.message(Command(commands=['health']))
 async def process_health(message: Message):
+    if not (message.from_user and await is_admin(message.from_user.id)):
+        return
     if session is None:
         await message.answer("ClientSession не запущен")
         return
