@@ -1,3 +1,4 @@
+import asyncio
 import aiohttp
 from io import BytesIO
 from aiogram.types import BufferedInputFile, InputMediaPhoto, InputMediaVideo
@@ -52,6 +53,21 @@ async def get_tweet_id(tweet_url: str) -> int | None:
 async def get_image_InputFile(session: aiohttp.ClientSession, image_url: str) -> InputMediaPhoto | None:
     max_size = 50 * 1024 * 1024
     async with session.get(image_url, proxy=config.proxy_url) as response:
+        try:
+            response.raise_for_status()
+        except aiohttp.ClientConnectorError:
+            logger.error(f"{time.time()}: get_image_InputFile: ClientConnectorError")
+            return None
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"{time.time()}: get_image_InputFile: ClientResponse: {e.status}")
+            return None
+        except asyncio.TimeoutError:
+            logger.error(f"{time.time()}: get_image_InputFile: TimeoutError")
+            return None
+        except aiohttp.ClientError as e:
+            logger.error(f"{time.time()}: get_image_InputFile: ClientError: {e}")
+            return None
+
         content_length, image_data = await get_response_size(response, max_size)
         if content_length > max_size:
             return None
@@ -64,6 +80,21 @@ async def get_image_InputFile(session: aiohttp.ClientSession, image_url: str) ->
 async def get_video_InputFile(session: aiohttp.ClientSession, video_url: str) -> InputMediaVideo | None:
     max_size = 50 * 1024 * 1024
     async with session.get(video_url, proxy=config.proxy_url) as response:
+        try:
+            response.raise_for_status()
+        except aiohttp.ClientConnectorError:
+            logger.error(f"{time.time()}: get_video_InputFile: ClientConnectorError")
+            return None
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"{time.time()}: get_video_InputFile: ClientResponse: {e.status}")
+            return None
+        except asyncio.TimeoutError:
+            logger.error(f"{time.time()}: get_video_InputFile: TimeoutError")
+            return None
+        except aiohttp.ClientError as e:
+            logger.error(f"{time.time()}: get_video_InputFile: ClientError: {e}")
+            return None
+
         content_length, video_data = await get_response_size(response, max_size)
         if content_length > max_size:
             return None

@@ -49,6 +49,8 @@ class Tweet:
             image = await get_image_InputFile(session, image_url)
             if image:
                 media.append(image)
+            else:
+                text += f"\n<a href='{image_url}'>Image</a>"
         for video_url in videos:
             video = await get_video_InputFile(session, video_url)
             if video:
